@@ -9,7 +9,6 @@
     "vite": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react"
-  },
-  "devDependencies": {}
+    "lucide-react": "latest"
+  }
 }
