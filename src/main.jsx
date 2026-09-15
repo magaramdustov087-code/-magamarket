@@ -7,6 +7,8 @@ import {
   Plus,
   ArrowLeft,
   MapPin,
+  Camera,
+  X,
 } from "lucide-react";
 import "./styles.css";
 
@@ -65,8 +67,22 @@ function App() {
   const [favorites, setFavorites] = useState([]);
   const [search, setSearch] = useState("");
 
-  const filtered = listings.filter((item) => {
-    const text = `${item.title} ${item.city} ${item.category}`.toLowerCase();
+  const [form, setForm] = useState({
+    title: "",
+    price: "",
+    city: "",
+    category: "Иномарки",
+    description: "",
+  });
+
+  const [myListings, setMyListings] = useState([]);
+
+  const allListings = [...myListings, ...listings];
+
+  const filtered = allListings.filter((item) => {
+    const text =
+      `${item.title} ${item.city} ${item.category}`.toLowerCase();
+
     return text.includes(search.toLowerCase());
   });
 
@@ -83,6 +99,48 @@ function App() {
     setPage("detail");
   }
 
+  function updateForm(field, value) {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  function submitListing(e) {
+    e.preventDefault();
+
+    if (!form.title || !form.price || !form.city) {
+      alert("Заполни название, цену и город");
+      return;
+    }
+
+    const newListing = {
+      id: Date.now(),
+      title: form.title,
+      price: `${form.price} ₽`,
+      market: "Цена продавца",
+      discount: "Новое",
+      city: form.city,
+      category: form.category,
+      description: form.description,
+      image:
+        "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=80",
+    };
+
+    setMyListings((prev) => [newListing, ...prev]);
+
+    setForm({
+      title: "",
+      price: "",
+      city: "",
+      category: "Иномарки",
+      description: "",
+    });
+
+    setPage("home");
+    alert("Объявление добавлено!");
+  }
+
   function Card({ item }) {
     const favorite = favorites.includes(item.id);
 
@@ -90,6 +148,7 @@ function App() {
       <div className="card" onClick={() => openDetail(item)}>
         <div className="card-image-wrap">
           <img src={item.image} alt={item.title} />
+
           <button
             className="favorite"
             onClick={(e) => {
@@ -97,7 +156,10 @@ function App() {
               toggleFavorite(item.id);
             }}
           >
-            <Heart size={20} fill={favorite ? "currentColor" : "none"} />
+            <Heart
+              size={20}
+              fill={favorite ? "currentColor" : "none"}
+            />
           </button>
         </div>
 
@@ -106,7 +168,7 @@ function App() {
           <div className="price">{item.price}</div>
 
           <div className="market">
-            Рынок: <s>{item.market}</s>
+            {item.market}
             <span>{item.discount}</span>
           </div>
 
@@ -145,6 +207,102 @@ function App() {
     );
   }
 
+  if (page === "add") {
+    return (
+      <div className="app">
+        <div className="topbar">
+          <button onClick={() => setPage("profile")}>
+            <ArrowLeft size={24} />
+          </button>
+
+          <strong>Подать объявление</strong>
+        </div>
+
+        <form className="listing-form" onSubmit={submitListing}>
+          <div className="photo-upload">
+            <Camera size={28} />
+            <span>Добавить фото</span>
+            <small>Фотографии подключим следующим этапом</small>
+          </div>
+
+          <label>
+            Название
+            <input
+              value={form.title}
+              onChange={(e) =>
+                updateForm("title", e.target.value)
+              }
+              placeholder="Например: BMW 530i 2020"
+            />
+          </label>
+
+          <label>
+            Цена
+            <input
+              type="number"
+              value={form.price}
+              onChange={(e) =>
+                updateForm("price", e.target.value)
+              }
+              placeholder="Цена в рублях"
+            />
+          </label>
+
+          <label>
+            Город
+            <input
+              value={form.city}
+              onChange={(e) =>
+                updateForm("city", e.target.value)
+              }
+              placeholder="Например: Москва"
+            />
+          </label>
+
+          <label>
+            Категория
+            <select
+              value={form.category}
+              onChange={(e) =>
+                updateForm("category", e.target.value)
+              }
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Описание
+            <textarea
+              value={form.description}
+              onChange={(e) =>
+                updateForm("description", e.target.value)
+              }
+              placeholder="Опиши автомобиль"
+              rows="5"
+            />
+          </label>
+
+          <button className="primary" type="submit">
+            Опубликовать объявление
+          </button>
+
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => setPage("profile")}
+          >
+            Отмена
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (page === "detail" && selected) {
     return (
       <div className="app">
@@ -152,24 +310,36 @@ function App() {
           <button onClick={() => setPage("catalog")}>
             <ArrowLeft size={24} />
           </button>
+
           <strong>Объявление</strong>
+
+          <button
+            onClick={() => setSelected(null)}
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        <img className="detail-image" src={selected.image} alt={selected.title} />
+        <img
+          className="detail-image"
+          src={selected.image}
+          alt={selected.title}
+        />
 
         <div className="detail-content">
-          <div className="category-label">{selected.category}</div>
-          <h1>{selected.title}</h1>
-          <div className="detail-price">{selected.price}</div>
+          <div className="category-label">
+            {selected.category}
+          </div>
 
-          <div className="detail-row">
-            <span>Рыночная цена</span>
-            <span>{selected.market}</span>
+          <h1>{selected.title}</h1>
+
+          <div className="detail-price">
+            {selected.price}
           </div>
 
           <div className="detail-row">
-            <span>Цена ниже рынка</span>
-            <strong>{selected.discount}</strong>
+            <span>Рынок</span>
+            <span>{selected.market}</span>
           </div>
 
           <div className="detail-row">
@@ -177,9 +347,19 @@ function App() {
             <span>{selected.city}</span>
           </div>
 
+          {selected.description && (
+            <div className="description">
+              {selected.description}
+            </div>
+          )}
+
           <button
             className="primary"
-            onClick={() => alert("Связь с продавцом будет доступна после подключения Telegram")}
+            onClick={() =>
+              alert(
+                "Связь с продавцом подключим через Telegram."
+              )
+            }
           >
             Связаться с продавцом
           </button>
@@ -203,10 +383,15 @@ function App() {
       <header className="header">
         <div>
           <div className="logo">МагаМаркет</div>
-          <div className="subtitle">Автомобили по низу рынка</div>
+          <div className="subtitle">
+            Автомобили по низу рынка
+          </div>
         </div>
 
-        <button className="profile-btn" onClick={() => setPage("profile")}>
+        <button
+          className="profile-btn"
+          onClick={() => setPage("profile")}
+        >
           <User size={22} />
         </button>
       </header>
@@ -215,6 +400,7 @@ function App() {
         <>
           <div className="search-box">
             <Search size={20} />
+
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -223,7 +409,9 @@ function App() {
           </div>
 
           <section>
-            <div className="section-title">Категории</div>
+            <div className="section-title">
+              Категории
+            </div>
 
             <div className="categories">
               {categories.map((category) => (
@@ -241,7 +429,9 @@ function App() {
           </section>
 
           <section>
-            <div className="section-title">Свежие объявления</div>
+            <div className="section-title">
+              Свежие объявления
+            </div>
 
             <div className="cards">
               {filtered.map((item) => (
@@ -258,6 +448,7 @@ function App() {
 
           <div className="search-box">
             <Search size={20} />
+
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -275,11 +466,15 @@ function App() {
 
       {page === "favorites" && (
         <>
-          <div className="page-title">Избранное</div>
+          <div className="page-title">
+            Избранное
+          </div>
 
           <div className="cards">
-            {listings
-              .filter((item) => favorites.includes(item.id))
+            {allListings
+              .filter((item) =>
+                favorites.includes(item.id)
+              )
               .map((item) => (
                 <Card key={item.id} item={item} />
               ))}
@@ -301,15 +496,29 @@ function App() {
           </div>
 
           <h2>Профиль</h2>
-          <p>Войдите через Telegram, чтобы управлять объявлениями.</p>
 
-          <button className="primary">
-            Войти через Telegram
-          </button>
+          <p>
+            Здесь будут твои объявления,
+            избранное и настройки.
+          </p>
 
-          <button className="add-listing" onClick={() => alert("Раздел добавления объявления будет подключен следующим этапом")}>
+          <button
+            className="primary"
+            onClick={() => setPage("add")}
+          >
             <Plus size={20} />
             Подать объявление
+          </button>
+
+          <button
+            className="add-listing"
+            onClick={() =>
+              alert(
+                "Оплату и продвижение объявления подключим следующим этапом."
+              )
+            }
+          >
+            Продвинуть объявление
           </button>
         </div>
       )}
